@@ -212,8 +212,8 @@ const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
     origin: [
-      'http://localhost:3000',
-      'http://localhost:3001',
+      'https://admin-mu-teal.vercel.app',
+      'https://backend-6bli.onrender.com',
       'http://localhost:3002',
       'http://localhost:3003'
     ],
@@ -250,8 +250,8 @@ io.on('connection', (socket) => {
 // Configure CORS
 app.use(cors({
   origin: [
-    'http://localhost:3000',
-    'http://localhost:3001',
+    'https://admin-mu-teal.vercel.app',
+    'https://backend-6bli.onrender.com',
     'http://localhost:3002',
     'http://localhost:3003'
   ],
