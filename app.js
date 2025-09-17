@@ -206,6 +206,7 @@ const http = require('http');
 var indexRouter = require('./routes/index'); // Changed from './routes/app' to './routes/index'
 var employeeRouter = require('./routes/employee');
 var settingsRouter = require('./routes/settings');
+var performanceRoutes = require('./routes/performanceRoutes');
 
 var app = express();
 const server = http.createServer(app);
@@ -281,6 +282,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use('/employee', employeeRouter);
 app.use('/admin/settings', settingsRouter);
+app.use('/admin/employees/performance', performanceRoutes);
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
