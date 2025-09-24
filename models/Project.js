@@ -7,11 +7,6 @@ const projectSchema = new mongoose.Schema(
       required: [true, 'Project name is required'],
       trim: true,
     },
-    client: {
-      type: String,
-      required: [true, 'Client name is required'],
-      trim: true,
-    },
     startDate: {
       type: Date,
       required: [true, 'Start date is required'],
@@ -23,7 +18,7 @@ const projectSchema = new mongoose.Schema(
     team: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Employee',
-      required: true,
+      required: [true, 'At least one team member is required'],
     }],
     progress: {
       type: Number,
@@ -41,10 +36,6 @@ const projectSchema = new mongoose.Schema(
     description: {
       type: String,
       trim: true,
-    },
-    budget: {
-      type: Number,
-      min: [0, 'Budget cannot be negative'],
     },
     priority: {
       type: String,

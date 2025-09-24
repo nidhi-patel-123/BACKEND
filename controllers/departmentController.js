@@ -22,8 +22,8 @@ exports.createDepartment = async (req, res) => {
       department,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error while creating department' });
+    console.error('Error creating department:', error);
+    res.status(500).json({ message: 'Server error while creating department', error: error.message });
   }
 };
 
@@ -38,8 +38,8 @@ exports.getDepartments = async (req, res) => {
     );
     res.status(200).json(deptsWithCount);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error while fetching departments' });
+    console.error('Error fetching departments:', error);
+    res.status(500).json({ message: 'Server error while fetching departments', error: error.message });
   }
 };
 
@@ -66,28 +66,41 @@ exports.updateDepartment = async (req, res) => {
       department,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error while updating department' });
+    console.error('Error updating department:', error);
+    res.status(500).json({ message: 'Server error while updating department', error: error.message });
   }
 };
 
 exports.deleteDepartment = async (req, res) => {
   const { id } = req.params;
+  console.log('Attempting to delete department with ID:', id);
 
   try {
-    const employeeCount = await Employee.countDocuments({ department: id });
-    if (employeeCount > 0) {
-      return res.status(400).json({ message: 'Cannot delete department with assigned employees' });
+    // Validate ID format
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: 'Invalid department ID format' });
     }
 
-    const department = await Department.findByIdAndDelete(id);
+    const department = await Department.findById(id);
     if (!department) {
       return res.status(404).json({ message: 'Department not found' });
     }
 
+    const employeeCount = await Employee.countDocuments({ department: id });
+    console.log(`Employees assigned to department ${id}:`, employeeCount);
+    if (employeeCount > 0) {
+      return res.status(400).json({
+        message: `Cannot delete department: ${employeeCount} employee(s) are still assigned. Please reassign or remove them first.`,
+      });
+    }
+
+    await Department.findByIdAndDelete(id);
     res.status(200).json({ message: 'Department deleted successfully' });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error while deleting department' });
+    console.error('Error deleting department:', {
+      error: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({ message: 'Server error while deleting department', error: error.message });
   }
 };

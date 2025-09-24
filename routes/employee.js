@@ -16,6 +16,8 @@ router.put("/profile", protectEmployee, employeeController.updateProfile);
 router.get("/attendance", protectEmployee, employeeController.getAttendance);
 router.post("/attendance/checkin", protectEmployee, employeeController.checkIn);
 router.post("/attendance/checkout", protectEmployee, employeeController.checkOut);
+router.post("/attendance/breakin", protectEmployee, employeeController.breakIn);
+router.post("/attendance/breakout", protectEmployee, employeeController.breakOut);
 
 // Leave routes
 router.get("/leaves", protectEmployee, employeeController.getLeaves);

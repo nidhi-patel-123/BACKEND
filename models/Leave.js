@@ -10,7 +10,7 @@ const leaveSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ["Vacation", "Sick Leave", "Personal", "Unpaid Leave","Casual Leave"],
+      enum: ["Vacation", "Sick Leave", "Personal", "Unpaid Leave", "Casual Leave", "Annual Leave"],
     },
     description: {
       type: String
@@ -33,6 +33,10 @@ const leaveSchema = new mongoose.Schema(
       enum: ["Pending", "Approved", "Rejected"],
       default: "Pending",
     },
+    rejectReason: {
+      type: String,
+      default: ""
+    }
   },
   { timestamps: true }
 );
