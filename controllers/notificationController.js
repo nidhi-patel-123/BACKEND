@@ -1,19 +1,14 @@
-
+// controllers/notificationController.js
 const Notification = require('../models/Notification');
 
-// 🔹 Get Notifications
 const getNotifications = async (req, res) => {
   try {
-    // Support both employee and admin auth middlewares
     let recipientId =
       (req.user && req.user._id) ||
       (req.employee && req.employee._id) ||
-      (req.admin && req.admin._id);
-
-    // Fallback: allow explicit user id header or query
-    if (!recipientId) {
-      recipientId = req.headers['x-user-id'] || req.query.userId;
-    }
+      (req.admin && req.admin._id) ||
+      req.headers['x-user-id'] ||
+      req.query.userId;
 
     if (!recipientId) {
       return res.status(400).json({ message: 'User not authenticated' });
@@ -33,7 +28,6 @@ const getNotifications = async (req, res) => {
   }
 };
 
-// 🔹 Mark Notification as Read
 const markAsRead = async (req, res) => {
   try {
     const { id } = req.params;
@@ -57,27 +51,19 @@ const markAsRead = async (req, res) => {
   }
 };
 
-// 🔹 Delete Notification
 const deleteNotification = async (req, res) => {
   try {
     const { id } = req.params;
-
-    // Support both employee and admin auth middlewares
     let recipientId =
       (req.user && req.user._id) ||
       (req.employee && req.employee._id) ||
-      (req.admin && req.admin._id);
-
-    // Fallback: allow explicit user id header
-    if (!recipientId) {
-      recipientId = req.headers['x-user-id'];
-    }
+      (req.admin && req.admin._id) ||
+      req.headers['x-user-id'];
 
     if (!recipientId) {
       return res.status(400).json({ message: 'User not authenticated' });
     }
 
-    // Find and delete the notification, ensuring it belongs to the authenticated user
     const notification = await Notification.findOneAndDelete({
       _id: id,
       recipient: recipientId,
@@ -90,10 +76,9 @@ const deleteNotification = async (req, res) => {
       });
     }
 
-    // Emit Socket.IO event for deletion
     const io = req.app.get('io');
     if (io) {
-      io.to(recipientId.toString()).emit('notificationDeleted', { id });
+      io.to(`${notification.recipientModel}_${recipientId}`).emit('notificationDeleted', { id });
     }
 
     res.status(200).json({
@@ -106,7 +91,6 @@ const deleteNotification = async (req, res) => {
   }
 };
 
-// 🔹 Create Notification (utility function)
 const createNotification = async (recipientId, recipientModel, type, message, relatedId, relatedModel) => {
   try {
     const notification = new Notification({
@@ -118,6 +102,14 @@ const createNotification = async (recipientId, recipientModel, type, message, re
       relatedModel,
     });
     await notification.save();
+
+    const io = require('http').createServer()._io || require('../app').app.get('io');
+    if (io) {
+      const room = recipientModel === 'Admin' ? 'admins' : `${recipientModel}_${recipientId}`;
+      io.to(room).emit('newNotification', notification);
+      console.log(`Emitted notification to ${room}:`, notification);
+    }
+
     return notification;
   } catch (error) {
     console.error('Create notification error:', error);

@@ -1,20 +1,23 @@
+// app.js
 require('dotenv').config();
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+const createError = require('http-errors');
+const express = require('express');
+const path = require('path');
+const cookieParser = require('cookie-parser');
+const logger = require('morgan');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const socketIo = require('socket.io');
 const http = require('http');
 
-var indexRouter = require('./routes/index'); // Changed from './routes/app' to './routes/index'
-var employeeRouter = require('./routes/employee');
-var settingsRouter = require('./routes/settings');
-var performanceRoutes = require('./routes/performanceRoutes');
+const indexRouter = require('./routes/index');
+const employeeRouter = require('./routes/employee');
+const settingsRouter = require('./routes/settings');
+const performanceRoutes = require('./routes/performanceRoutes');
+const chatRoutes = require('./controllers/chatController');
+const messageRoutes = require('./controllers/message'); // Fixed typo from 'meassage'
 
-var app = express();
+const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
@@ -29,6 +32,9 @@ const io = socketIo(server, {
   },
 });
 
+// Attach Socket.IO to app for use in controllers
+app.set('io', io);
+
 // Socket.IO middleware to attach io to req
 app.use((req, res, next) => {
   req.io = io;
@@ -41,6 +47,10 @@ io.on('connection', (socket) => {
 
   // Join user-specific room
   socket.on('join', (userId, role) => {
+    if (!userId || !role) {
+      console.error('Invalid join request:', { userId, role });
+      return;
+    }
     socket.join(`${role}_${userId}`);
     console.log(`User ${userId} joined ${role} room`);
     if (role === 'admin') {
@@ -63,7 +73,7 @@ app.use(cors({
     'http://localhost:3003'
   ],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-user-id', 'X-User-Id'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-user-id'],
   credentials: true,
 }));
 
@@ -75,7 +85,7 @@ mongoose.connect(process.env.MONGO_URI, {
   .then(() => console.log('MongoDB connected✔️'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-// view engine setup
+// View engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
@@ -85,18 +95,21 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Routes
 app.use('/', indexRouter);
 app.use('/employee', employeeRouter);
 app.use('/admin/settings', settingsRouter);
 app.use('/admin/employees/performance', performanceRoutes);
+app.use('/chat', chatRoutes);
+app.use('/msg', messageRoutes);
 
-// catch 404 and forward to error handler
-app.use(function (req, res, next) {
+// Catch 404 and forward to error handler
+app.use((req, res, next) => {
   next(createError(404));
 });
 
-// error handler
-app.use(function (err, req, res, next) {
+// Error handler
+app.use((err, req, res, next) => {
   if (req.path.startsWith('/admin/') || req.path.startsWith('/employee/')) {
     const status = err.status || 500;
     const message = err.message || 'Internal Server Error';

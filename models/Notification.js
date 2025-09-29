@@ -1,9 +1,9 @@
+// models/Notification.js
 const mongoose = require('mongoose');
 
 const notificationSchema = new mongoose.Schema({
   recipient: {
-    type: mongoose.Schema.Types.ObjectId,
-    refPath: 'recipientModel',
+    type: mongoose.Schema.Types.Mixed, // Supports both ObjectId and string
     required: true,
   },
   recipientModel: {
@@ -13,7 +13,7 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['attendance', 'leave', 'payroll', 'project'],
+    enum: ['attendance', 'leave', 'payroll', 'project', 'message'],
     required: true,
   },
   message: {
@@ -30,7 +30,7 @@ const notificationSchema = new mongoose.Schema({
   },
   relatedModel: {
     type: String,
-    enum: ['Attendance', 'Leave', 'Payroll', 'Project'],
+    enum: ['Attendance', 'Leave', 'Payroll', 'Project', 'Message'],
   },
   createdAt: {
     type: Date,
